@@ -1,10 +1,8 @@
-from fastapi import APIRouter, HTTPException, Depends
-from typing import List
+from fastapi import APIRouter, Depends, HTTPException
 
-from ..models.model import Account, Account_Pydantic, AccountIn_Pydantic
-from ..schemas import account, token
-from ..service.token_service import get_token
-import pay, balance
+from ..schemas.account import CreateUser, Status
+from ..models.model import Customers, Customers_Pydantic, Accounts, Accounts_Pydantic
+from ..dependencies import token_role_filter
 
 router = APIRouter(
     prefix='/account',
@@ -12,44 +10,35 @@ router = APIRouter(
     responses={404: {'description': 'Not found'}},
 )
 
-router.include_router(pay.router)
-router.include_router(balance.router)
+@router.get('/', dependencies=[Depends(token_role_filter)])
+async def read_customers():
+    '''
+    고객의 데이터를 가져옵니다. 데이터에 계좌 잔액도 확인할 수 있게 만듭니다.
+    '''
+    return await Customers_Pydantic.from_queryset(Customers.all())
 
-@router.get('/', response_model=List[Account_Pydantic], tags=['admin', 'teacher'])
-async def get_accounts(token_data: token.TokenData = Depends(get_token)):
+@router.get('/{user_email}', response_model=Customers_Pydantic)
+async def get_customer(user_email: str):
     '''
-    전체 리스트를 가져오는 기능이다.
+    고객의 이메일을 가지고 고객의 데이터를 조회한다.
     '''
-    if token_data.user_role != 'ROLE_TEACHER' or token_data.user_role != 'ROLE_ADMIN':
-        raise HTTPException(status_code=402, detail='이 기능을 사용할 권한이 없습니다.')
-    return await Account_Pydantic.from_queryset(Account.all())
+    return await Customers_Pydantic.from_queryset_single(Customers.get(customer_email=user_email))
 
-@router.get('/{user_email}', response_model=Account_Pydantic)
-async def get_account(user_email: str):
-    '''
-    계좌 하나를 찾아서 조회하는 기능입니다.
-    '''
-    return await Account_Pydantic.from_queryset_single(Account.get(email=user_email))
+@router.post('/')
+async def create_user(user_data: CreateUser):
+    # Customer에 데이터를 추가 한다.
+    customer_data = await Customers.create(customer_email=user_data.user_email, role_id=user_data.user_role)
+    # Account에 데이터를 추가 한다.
+    account_data = await Accounts.create(balance=0, customer_id=customer_data.pk)
 
-@router.post('/', response_model=Account_Pydantic)
-async def create_account(account: AccountIn_Pydantic):
-    '''
-    계좌를 만드는 기능입니다. 토큰이 필요합니다.
-    '''
-    token_data = await Account.create(**account.dict(exclude_unset=True))
-    return await Account_Pydantic.from_tortoise_orm(token_data)
+    return Customers_Pydantic.from_tortoise_orm(customer_data)
 
-@router.delete('/{user_email}', response_model=account.Status, tags=['admin', 'teacher'])
-async def delete_account(
-    user_email: str,
-    token_data: token.TokenData = Depends(get_token)
-):
+@router.delete('/{user_email}', dependencies=[Depends(token_role_filter)])
+async def delete_user(user_email: str):
     '''
-    계좌를 제거하는 기능입니다.
+    유저와 계좌를 삭제한다. 유저가 삭제되면 계좌 삭제
     '''
-    if token_data.user_role != 'ROLE_TEACHER' or token_data.user_role != 'ROLE_ADMIN':
-        raise HTTPException(status_code=403, detail='이 기능을 사용할 권한이 없습니다.')
-    delete_count = await Account.filter(email=user_email).delete()
+    delete_count = await Customers.filter(customer_email=user_email).delete()
     if not delete_count:
         raise HTTPException(status_code=404, detail='사용자의 데이터를 찾을 수 없습니다.')
-    return account.Status(message=f'{user_email}이 삭제되었다.')
+    return Status(message=f'{user_email}이 삭제되었습니다.')

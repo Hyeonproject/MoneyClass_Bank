@@ -3,8 +3,8 @@ from tortoise.contrib.fastapi import register_tortoise
 
 import uvicorn
 
-from .routers import account
 from .service import key
+from .routers import account
 
 app = FastAPI(title='은행 API')
 

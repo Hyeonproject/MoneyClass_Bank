@@ -10,9 +10,9 @@ class CreatedModel(models.Model):
 
 
 class Customers(CreatedModel):
-    '''
+    """
     고객 테이블
-    '''
+    """
     id = fields.UUIDField(pk=True)
     email = fields.CharField(max_length=50, unique=True)
     role = fields.CharField(max_length=25)
@@ -22,25 +22,25 @@ class Customers(CreatedModel):
 
 
 class Accounts(CreatedModel):
-    '''
+    """
     계좌 테이블
-    '''
+    """
     id = fields.UUIDField(pk=True)
     balance = fields.IntField(default=0)
     modified = fields.DatetimeField(auto_now=True)
-    customer_id = fields.OneToOneField('models.Customers', related_name='customer_account')
+    customer = fields.OneToOneField('models.Customers', related_name='customer_account')
 
 
 class Transcations(CreatedModel):
-    '''
+    """
     거래 내역 테이블
-    '''
+    """
     id = fields.UUIDField(pk=True)
     date = fields.DatetimeField(auto_now_add=True)
     amount = fields.IntField()
-    account_id = fields.ForeignKeyField('models.Accounts', related_name='account')
-    customer_id = fields.ForeignKeyField('models.Customers', related_name='customer_trans')
-    trans_type_id = fields.ForeignKeyField('models.TranscationType', related_name='trans_type')
+    account = fields.ForeignKeyField('models.Accounts', related_name='account')
+    customer = fields.ForeignKeyField('models.Customers', related_name='customer_trans')
+    trans_type = fields.ForeignKeyField('models.TranscationType', related_name='trans_type')
 
     def __str__(self):
         return '{} -> {}'.format(self.account_id, self.customer_id)
@@ -66,8 +66,8 @@ class AdminLogs(models.Model):
     관리자 권한 사용 로그 테이블
     """
     id = fields.UUIDField(pk=True)
-    func_id = fields.ForeignKeyField('models.AdminFunctions', related_name='func')
-    customer_id = fields.ForeignKeyField('models.Customers', related_name='customer_log')
+    admin_funcs = fields.ForeignKeyField('models.AdminFunctions', related_name='func')
+    customer = fields.ForeignKeyField('models.Customers', related_name='customer_log')
 
 
 # Pydantic

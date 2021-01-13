@@ -1,30 +1,39 @@
 from fastapi.testclient import TestClient
 
 from ..main import app
-from ..service import key, test
+from ..service import key
+from ..service.test_service import jwt_make
 
-__STUDENT_TOKEN = key.get_key('test_student_token')
-__TEACHER_TOKEN = key.get_key('test_teacher_token')
+__TEACHER_TOKEN = key.get_key('teacher_token')
 
 
 client = TestClient(app)
 
-def test_read_customers_exception():
-    # 그냥 아무 데이터 없이 줬을 경우
-    reseponse = client.get('/account')
-    assert reseponse.status_code == 401
-    assert reseponse.json() == {'detail': 'Not authenticated'}
 
-    # 학생 권한일 경우
-    reseponse = client.get('/account', headers=test.header_token(__STUDENT_TOKEN))
-    assert reseponse.status_code == 401
-    assert reseponse.json() == {'detail': '이 기능을 사용할 권한이 없습니다.'}
+def test_create_user():
+    response = client.post(
+        '/account',
+        json={
+            'user_email': 'testing@test.com',
+            'user_role': 'ROLE_TEACHER'
+        }
+    )
+    assert response.status_code == 200
+    user_json = response.json()
+    assert user_json['email'] == 'testing@test.com'
+    assert user_json['role'] == 'ROLE_TEACHER'
 
-def test_read_customers():
-    # 선생님 권한의 토큰을 제공한 경우
-    reseponse = client.get('/account', headers=test.header_token(__TEACHER_TOKEN))
-    assert reseponse.status_code == 202
 
-def test_create_user_exception():
-    # 역할이 있는지 확인 부터 해야함
-    pass
+def test_read_users():
+    response = client.get(
+        '/account',
+        headers= jwt_make(__TEACHER_TOKEN)
+    )
+
+    assert response.status_code == 200
+
+def test_read_user():
+    response = client.get(
+        '/account/testing@test.com',
+
+    )

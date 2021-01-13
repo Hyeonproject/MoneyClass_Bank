@@ -15,6 +15,6 @@ class UpdateBalance(BaseModel):
     balance: int
     note: Optional[str] = None
 
-class CreateUser(BaseModel):
+class User(BaseModel):
     user_email: str
     user_role: str

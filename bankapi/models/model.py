@@ -1,11 +1,13 @@
 from tortoise import fields, models
 from tortoise.contrib.pydantic import pydantic_model_creator
 
+
 class CreatedModel(models.Model):
     created = fields.DatetimeField(auto_now_add=True)
 
     class Meta:
         abstract = True
+
 
 class Customers(CreatedModel):
     '''
@@ -18,14 +20,16 @@ class Customers(CreatedModel):
     def __str__(self):
         return self.email
 
+
 class Accounts(CreatedModel):
     '''
     계좌 테이블
     '''
     id = fields.UUIDField(pk=True)
-    balance = fields.IntField()
+    balance = fields.IntField(default=0)
     modified = fields.DatetimeField(auto_now=True)
     customer_id = fields.OneToOneField('models.Customers', related_name='customer_account')
+
 
 class Transcations(CreatedModel):
     '''
@@ -41,27 +45,30 @@ class Transcations(CreatedModel):
     def __str__(self):
         return '{} -> {}'.format(self.account_id, self.customer_id)
 
+
 class TranscationType(models.Model):
-    '''
+    """
     거래 타입을 추가할 수 있습니다. 이체 등등 적용 예정
-    '''
+    """
     id = fields.IntField(pk=True)
     trans_type_name = fields.CharField(max_length=30)
 
 class AdminFunctions(models.Model):
-    '''
+    """
     관리자 기능 테이블
-    '''
+    """
     id = fields.IntField(pk=True)
     func_name = fields.CharField(max_length=50)
 
+
 class AdminLogs(models.Model):
-    '''
+    """
     관리자 권한 사용 로그 테이블
-    '''
+    """
     id = fields.UUIDField(pk=True)
     func_id = fields.ForeignKeyField('models.AdminFunctions', related_name='func')
     customer_id = fields.ForeignKeyField('models.Customers', related_name='customer_log')
+
 
 # Pydantic
 Customers_Pydantic = pydantic_model_creator(Customers, name='Customers')

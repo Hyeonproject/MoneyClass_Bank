@@ -18,5 +18,5 @@ async def payment(payment : Payment):
         raise HTTPException(status_code=400, detail='보내는 사람이 입력되어있지 않습니다.')
 
 async def token_role_filter(token_data: TokenData = Depends(get_token)):
-    if token_data.user_role[0] != get_key('role_teacher') or token_data.user_role[0] != get_key('role_admin'):
+    if token_data.user_role[0] != get_key('role_teacher') and token_data.user_role[0] != get_key('role_admin'):
         raise HTTPException(status_code=401, detail='이 기능을 사용할 권한이 없습니다.')

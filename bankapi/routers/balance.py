@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, Depends
 from tortoise.exceptions import BaseORMException, OperationalError
-from tortoise.transactions import atomic, in_transaction
+from tortoise.transactions import in_transaction
 
-from ..models.model import Customers, Accounts, Accounts_Pydantic
+from ..models.model import Customers, Accounts, Accounts_Pydantic, Transcations, TranscationType
 from ..schemas.balance import BalanceOut, PaymentIn
 from ..dependencies import payment
 
@@ -39,6 +39,12 @@ async def read_balance(user_email: str):
 @router.post('/pay', dependencies=[Depends(payment)])
 async def pay(pay_data: PaymentIn):
     try:
-        async with in_transaction() as
-    transfer_user = await Customers.get(email=pay_data.transfer_user)
-    deposit_user = await Customers.get(email=pay_data.deposit_user)
+        async with in_transaction() as connection:
+            transfer_user = await Customers.get(email=pay_data.transfer_user)
+            deposit_user = await Customers.get(email=pay_data.deposit_user)
+            # todo 트랜잭션을 만든다
+            await Transcations.create(
+                amount=pay_data.amount,
+                account=
+            )
+

@@ -12,11 +12,6 @@ __TEACHER_TOKEN = key.get_key('teacher_token')
 
 client = TestClient(app)
 
-# todo 테스트 코드를 작성하면 실수시 DB가 통째로 날라간다.
-# 임의의 sqlite dbms를 생성하는 점을 목표로 둔다.
-
-initializer(['bankapi.models.model'], db_url='sqlite:///testdb.sqlite.sqlite', app_label='models')
-
 
 def test_create_user():
     response = client.post(
@@ -44,5 +39,3 @@ def test_read_user():
     assert response.status_code == 200
     response_json = response.json()
     assert response_json['email'] == 'testing@test.com'
-
-finalizer()

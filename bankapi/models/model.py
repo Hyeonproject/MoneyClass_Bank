@@ -31,7 +31,7 @@ class Accounts(CreatedModel):
     customer = fields.OneToOneField('models.Customers', related_name='customer_account')
 
 
-class Transcations(CreatedModel):
+class Transcations(models.Model):
     """
     거래 내역 테이블
     """

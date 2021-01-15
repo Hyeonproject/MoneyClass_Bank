@@ -51,7 +51,7 @@ class TranscationType(models.Model):
     거래 타입을 추가할 수 있습니다. 이체 등등 적용 예정
     """
     id = fields.IntField(pk=True)
-    trans_type_name = fields.CharField(max_length=30)
+    trans_type_name = fields.CharField(max_length=30, unique=True)
 
 class AdminFunctions(models.Model):
     """
@@ -73,4 +73,4 @@ class AdminLogs(models.Model):
 # Pydantic
 Customers_Pydantic = pydantic_model_creator(Customers, name='Customers')
 Accounts_Pydantic = pydantic_model_creator(Accounts, name='Accounts')
-
+TranscationType_Pydantic = pydantic_model_creator(TranscationType, name='TranscationType')

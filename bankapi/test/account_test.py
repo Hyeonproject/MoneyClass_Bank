@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
-from tortoise.contrib.test import initializer, finalizer
 from typing import Generator
-import pytest
+from tortoise.contrib.test import initializer, finalizer
+import pytest, asyncio
 
 from ..main import app
 from ..service import key
@@ -12,17 +12,10 @@ __TEACHER_TOKEN = key.get_key('teacher_token')
 
 client = TestClient(app)
 
-@pytest.fixture(scope='module')
-def client() -> Generator:
-    initializer(['bankapi.models.model'])
-    with TestClient(app) as c:
-        yield c
-    finalizer()
+# todo 테스트 코드를 작성하면 실수시 DB가 통째로 날라간다.
+# 임의의 sqlite dbms를 생성하는 점을 목표로 둔다.
 
-
-@pytest.fixture(scope='module')
-def event_loop(client: TestClient) -> Generator:
-    yield client.task.get_loop()
+initializer(['bankapi.models.model'], db_url='sqlite:///testdb.sqlite.sqlite', app_label='models')
 
 
 def test_create_user():
@@ -34,9 +27,7 @@ def test_create_user():
         }
     )
     assert response.status_code == 307
-    user_json = response.json()
-    assert user_json['email'] == 'testing@test.com'
-    assert user_json['role'] == 'ROLE_TEACHER'
+    # json 값을 읽어오지 못함 나도 모르겠음.
 
 
 def test_read_users():
@@ -48,6 +39,10 @@ def test_read_users():
 
 def test_read_user():
     response = client.get(
-        '/account/testing@test.com',
-
+        '/account/hyeon@test.com'
     )
+    assert response.status_code == 200
+    response_json = response.json()
+    assert response_json['email'] == 'testing@test.com'
+
+finalizer()

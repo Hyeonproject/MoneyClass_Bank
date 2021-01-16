@@ -4,12 +4,13 @@ from tortoise.contrib.fastapi import register_tortoise
 import uvicorn
 
 from .service import key
-from .routers import account, admin
+from .routers import account, admin, balance
 
 app = FastAPI(title='은행 API')
 
 app.include_router(account.router)
 app.include_router(admin.router)
+app.include_router(balance.router)
 
 
 @app.get('/')

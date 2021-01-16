@@ -17,10 +17,11 @@ async def create_user(user_data: User):
     계좌와 유저를 만들어줍니다.
     """
     # customer 데이터 만들기
-    customer_data = await Customers.create(email=user_data.user_email, role=user_data.user_role)
-    # account 계좌 생성하기
-    customer = await Customers.get(email=user_data.user_email)
-    await Accounts.create(customer_id=customer.pk)
+    customer_data = await Customers.create(
+        email=user_data.user_email,
+        role=user_data.user_role
+    )
+    await Accounts.create(customers_id=customer_data.pk)
     return Customers_Pydantic.from_orm(customer_data)
 
 

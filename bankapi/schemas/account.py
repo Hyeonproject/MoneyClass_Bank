@@ -13,5 +13,5 @@ class UpdateBalance(BaseModel):
 
 
 class User(BaseModel):
-    user_email: Optional[str]
-    user_role: Optional[str]
+    user_email: str
+    user_role: Optional[str] = 'ROLE_STUDENT'

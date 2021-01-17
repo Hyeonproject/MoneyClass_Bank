@@ -2,7 +2,6 @@ from fastapi import APIRouter, HTTPException, Depends
 from tortoise.exceptions import BaseORMException, OperationalError
 from tortoise.transactions import in_transaction
 from tortoise.expressions import F
-import uuid
 
 from ..models.model import Customers, Accounts, Accounts_Pydantic, Transcation, Transcations_Pydantic
 from ..schemas.balance import BalanceOut, PayIn

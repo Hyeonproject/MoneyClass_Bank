@@ -57,4 +57,4 @@ class TranscationType(models.Model):
 Customers_Pydantic = pydantic_model_creator(Customers, name='Customers')
 Accounts_Pydantic = pydantic_model_creator(Accounts, name='Accounts')
 TranscationType_Pydantic = pydantic_model_creator(TranscationType, name='TranscationType')
-Transcations_Pydantic = pydantic_model_creator(Transcation, name='Transcations')
+Transcations_Pydantic = pydantic_model_creator(Transcation, name='Transcation')

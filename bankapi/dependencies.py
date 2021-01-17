@@ -1,16 +1,16 @@
 from fastapi import HTTPException, Depends
 
-from .schemas.balance import PaymentIn
+from .schemas.balance import PayIn
 from .schemas.token import TokenData
 from .service.token_service import get_token
 from .service.key import get_key
 
 
-async def payment(pay: PaymentIn):
+async def payment(pay: PayIn):
     if pay is None:
         raise HTTPException(status_code=400, detail='필요한 값이 없습니다.')
     elif pay.amount is None:
-        raise HTTPException(status_code=400, detail='거래 금액이 입력되어 있지 않습니다.')
+        raise HTTPException(status_code=400, detail='데이터가 입력이 안 되어 있습니다.')
     elif pay.amount <= 0:
         raise HTTPException(status_code=400, detail='거래 금액이 음수 또는 0입니다.')
     elif pay.transfer_email is None:

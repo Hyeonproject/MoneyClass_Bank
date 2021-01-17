@@ -21,8 +21,8 @@ async def create_user(user_data: User):
         email=user_data.user_email,
         role=user_data.user_role
     )
-    await Accounts.create(customers_id=customer_data.pk)
-    return Customers_Pydantic.from_orm(customer_data)
+    await Accounts.create(customer_id=customer_data.pk)
+    return await Customers_Pydantic.from_tortoise_orm(customer_data)
 
 
 @router.get('/', dependencies=[Depends(token_role_filter)])

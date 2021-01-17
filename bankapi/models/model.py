@@ -1,5 +1,5 @@
 from tortoise import fields, models
-from tortoise.contrib.pydantic import pydantic_model_creator
+from tortoise.contrib.pydantic import pydantic_model_creator, pydantic_queryset_creator
 
 
 class CreatedModel(models.Model):
@@ -28,12 +28,12 @@ class Accounts(CreatedModel):
     id = fields.UUIDField(pk=True)
     balance = fields.IntField(default=0)
     modified = fields.DatetimeField(auto_now=True)
-    customers = fields.OneToOneField(
+    customer = fields.OneToOneField(
         'models.Customers', related_name='CustomerToAccount'
     )
 
 
-class Transcations(models.Model):
+class Transcation(models.Model):
     """
     거래 내역 테이블
     """
@@ -57,4 +57,4 @@ class TranscationType(models.Model):
 Customers_Pydantic = pydantic_model_creator(Customers, name='Customers')
 Accounts_Pydantic = pydantic_model_creator(Accounts, name='Accounts')
 TranscationType_Pydantic = pydantic_model_creator(TranscationType, name='TranscationType')
-Transcations_Pydantic = pydantic_model_creator(Transcations, name='Transcations')
+Transcations_Pydantic = pydantic_model_creator(Transcation, name='Transcations')

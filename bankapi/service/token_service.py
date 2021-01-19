@@ -21,9 +21,9 @@ async def get_token(token: str = Depends(oauth2_scheme)):
         user_email: str = payload['user_name']
         user_role: List = payload['authorities']
         if user_email is None:
-            raise __CREDENTIALS_EXCEPTION
+            raise HTTPException(status_code=401, detail='토큰에 유저 이메일 값이 없다.')
         if user_role is None:
-            raise __CREDENTIALS_EXCEPTION
+            raise HTTPException(status_code=401, detail='토큰에 유저 권한 값이 없다.')
         token_data = TokenData(user_email=user_email, user_role=user_role)
     except JWTError:
         raise __CREDENTIALS_EXCEPTION

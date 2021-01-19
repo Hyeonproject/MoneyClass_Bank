@@ -3,7 +3,8 @@ from tortoise.exceptions import BaseORMException, OperationalError
 from tortoise.transactions import in_transaction
 from tortoise.expressions import F
 
-from ..models.model import Customers, Accounts, Accounts_Pydantic, Transcation, Transcations_Pydantic
+from ..models.model import Customers, Accounts, Accounts_Pydantic,\
+    Transcation, Transcations_Pydantic, PayDay, PayDay_Pydantic
 from ..schemas.balance import BalanceOut, PayIn
 from ..dependencies import payment, token_role_filter
 
@@ -14,7 +15,7 @@ router = APIRouter(
 )
 
 
-@router.get('/')
+@router.get('/', dependencies=[Depends(token_role_filter)])
 async def read_balances():
     """
     전체 계좌를 다 확인하는 기능입니다.
@@ -29,16 +30,16 @@ async def read_balance(user_email: str):
     """
     try:
         customer = await Customers.get(email=user_email)
-        account = await Accounts.get(customer_id=customer.pk)
+        account = await Accounts.get(customer_email_id=customer.email)
     except BaseORMException:
-        raise HTTPException(status_code=404, detail='데이터베이스 오류입니다.')
+        raise HTTPException(status_code=400, detail='데이터베이스를 찾는 도중 문제가 발생했습니다.')
 
     output = BalanceOut(
         user_email=customer.email,
         user_role=customer.role,
         balance=account.balance,
         customer_id=customer.id,
-        account_id=customer.id
+        account_id=account.id
     )
     return output
 
@@ -50,26 +51,24 @@ async def payment(pay: PayIn):
     기존에 자신과 보낼 사람의 데이터를 입력받고 처리하는 역할을 수행합니다.
     """
     # 액수가 부족한지 검사하기
-    transfer_customer = await Customers.get(email=pay.transfer_email)
-    transfer_account = await Accounts.get(customer_id=transfer_customer.pk)
+    transfer_account = await Accounts.get(customer_email_id=pay.transfer_email)
 
     if transfer_account.balance < pay.amount:
         raise HTTPException(status_code=400, detail='잔액이 부족해서 이체 불가능')
     # 돈 보내는 트랜잭션 + 기록
     try:
         async with in_transaction() as connection:
-            await Accounts.filter(customer_id=transfer_customer.pk).update(
+            await Accounts.filter(customer_email_id=pay.transfer_email).update(
                 balance=F('balance') - pay.amount
             )
-            deposit_customer = await Customers.get(email=pay.deposit_email)
-            await Accounts.filter(customer_id=deposit_customer.pk).update(
+            await Accounts.filter(customer_email_id=pay.deposit_email).update(
                 balance=F('balance') + pay.amount
             )
             transcation_data = await Transcation.create(
                 amount=pay.amount,
-                account_id=transfer_account.pk,
-                customer_id=deposit_customer.pk,
-                trans_type_id=1,
+                transfer_email_id=pay.transfer_email,
+                deposit_email_id=pay.deposit_email,
+                trans_type_id='일반이체',
                 using_db=connection,
             )
     except OperationalError:
@@ -78,26 +77,25 @@ async def payment(pay: PayIn):
     return await Transcations_Pydantic.from_tortoise_orm(transcation_data)
 
 
-# 월급 주는 기능
 @router.post('/payday/{amount}', dependencies=[Depends(token_role_filter)])
 async def payday(amount: int):
     """
-    전체 월급을 주는 기능입니다. 월급을 amount 값을 입력하면 다음과 같이 사용할 수 있습니다.
-    이 기능은 토큰값에서 권한이 있어야 사용 가능합니다.
+    월급을 주거나 세금을 전체다 걷어야할 때 사용합니다.
+    음수로 값을 넣을 경우 음수로 작동합니다.
+    관리자 또는 선생님의 권한을 가진 토큰이 필요합니다.
     """
+    # 0 예외 처리
+    if amount == 0:
+        raise HTTPException(status_code=400, detail='0의 데이터는 입력을 받지 않습니다.')
     try:
         async with in_transaction() as connection:
             await Accounts.all().update(balance=F('balance') + amount)
-            admin_customer = await Customers.get(email='admin@server.com')
-            admin_account = await Accounts.get(customer_id=admin_customer.pk)
-            await Transcation.create(
+            payday_data = await PayDay.create(
                 amount=amount,
-                account_id=admin_account.pk,
-                customer_id=admin_customer.pk,
-                trans_type_id=2,  # 월급 입금
-                using_db=connection
+                trans_type_id='월급입금',
             )
+
     except OperationalError:
         raise HTTPException(status_code=400, detail='월급 주는 도중에 문제가 발생했습니다.')
 
-    return await Accounts_Pydantic.from_queryset(Accounts.all())
+    return await PayDay_Pydantic.from_tortoise_orm(payday_data)

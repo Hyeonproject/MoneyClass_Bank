@@ -31,12 +31,18 @@ async def create_trans_type(trans: TransTypeIn):
 
 @router.put('/transcation-type/{trans_id}', dependencies=[Depends(token_role_filter)])
 async def update_trans_type(trans_id: int, trans: TransTypeIn):
+    """
+    transcation_type 수정할 수 있는 기능
+    """
     trans_type = await TranscationType.filter(id=trans_id).update(trans_type_name=trans.trans_type_name)
     return await TranscationType_Pydantic.from_queryset_single(TranscationType.get(trans_type_name=trans.trans_type_name))
 
 
 @router.delete('/transcation-type/{trans_id}', dependencies=[Depends(token_role_filter)])
 async def delete_trans_type(tran_id: int):
+    """
+    transcation_type를 삭제할 수 있는 기능
+    """
     delete_count = await TranscationType.filter(id=tran_id).delete()
     if not delete_count:
         raise HTTPException(status_code=404, detail=f'{tran_id} 번호의 데이터가 없다.')

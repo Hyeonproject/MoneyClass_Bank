@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 
 from ..schemas.account import User, Status
-from ..models.model import Customers, Customers_Pydantic, Accounts
+from ..models.model import Customers, Accounts, Accounts_Pydantic, Customers_Pydantic
 from ..dependencies import token_role_filter
 
 router = APIRouter(
@@ -17,12 +17,9 @@ async def create_user(user_data: User):
     계좌와 유저를 만들어줍니다.
     """
     # customer 데이터 만들기
-    customer_data = await Customers.create(
-        email=user_data.user_email,
-        role=user_data.user_role
-    )
-    await Accounts.create(customer_id=customer_data.pk)
-    return await Customers_Pydantic.from_tortoise_orm(customer_data)
+    await Customers.create(email=user_data.user_email, role=user_data.user_role)
+    account_data = await Accounts.create(customer_email_id=user_data.user_email)
+    return await Accounts_Pydantic.from_tortoise_orm(account_data)
 
 
 @router.get('/', dependencies=[Depends(token_role_filter)])

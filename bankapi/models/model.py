@@ -1,5 +1,5 @@
 from tortoise import fields, models
-from tortoise.contrib.pydantic import pydantic_model_creator, pydantic_queryset_creator
+from tortoise.contrib.pydantic import pydantic_model_creator
 
 
 class CreatedModel(models.Model):
@@ -28,8 +28,8 @@ class Accounts(CreatedModel):
     id = fields.UUIDField(pk=True)
     balance = fields.IntField(default=0)
     modified = fields.DatetimeField(auto_now=True)
-    customer = fields.OneToOneField(
-        'models.Customers', related_name='CustomerToAccount'
+    customer_email = fields.OneToOneField(
+        'models.Customers', related_name='CustomerToAccount', to_field='email'
     )
 
 
@@ -40,9 +40,9 @@ class Transcation(models.Model):
     id = fields.UUIDField(pk=True)
     date = fields.DatetimeField(auto_now_add=True)
     amount = fields.IntField()
-    account = fields.ForeignKeyField('models.Accounts', related_name='account')
-    customer = fields.ForeignKeyField('models.Customers', related_name='customer_trans')
-    trans_type = fields.ForeignKeyField('models.TranscationType', related_name='trans_type')
+    transfer_email = fields.ForeignKeyField('models.Customers', related_name='transfer',to_field='email')
+    deposit_email = fields.ForeignKeyField('models.Customers', related_name='deposit',to_field='email')
+    trans_type = fields.ForeignKeyField('models.TranscationType', related_name='trans_type', to_field='trans_type_name')
 
 
 class TranscationType(models.Model):
@@ -53,8 +53,16 @@ class TranscationType(models.Model):
     trans_type_name = fields.CharField(max_length=30, unique=True)
 
 
+class PayDay(models.Model):
+    id = fields.UUIDField(pk=True)
+    date = fields.DatetimeField(auto_now_add=True)
+    amount = fields.IntField()
+    trans_type = fields.ForeignKeyField('models.TranscationType', related_name='trans_pay', to_field='trans_type_name')
+
+
 # Pydantic
 Customers_Pydantic = pydantic_model_creator(Customers, name='Customers')
 Accounts_Pydantic = pydantic_model_creator(Accounts, name='Accounts')
 TranscationType_Pydantic = pydantic_model_creator(TranscationType, name='TranscationType')
 Transcations_Pydantic = pydantic_model_creator(Transcation, name='Transcation')
+PayDay_Pydantic = pydantic_model_creator(PayDay, name='payday')
